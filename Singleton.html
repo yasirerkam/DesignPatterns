@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 2.0.8.dev">
+<meta name="author" content="Yasir Erkam Özdemir">
+<title>Singleton Paternin C#'da Uygulanması</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700">
+<style>
+/* Asciidoctor default stylesheet | MIT License | https://asciidoctor.org */
+/* Uncomment @import statement to use as custom stylesheet */
+/*@import "https://fonts.googleapis.com/css?family=Open+Sans:300,300italic,400,400italic,600,600italic%7CNoto+Serif:400,400italic,700,700italic%7CDroid+Sans+Mono:400,700";*/
+article,aside,details,figcaption,figure,footer,header,hgroup,main,nav,section{display:block}
+audio,video{display:inline-block}
+audio:not([controls]){display:none;height:0}
+html{font-family:sans-serif;-ms-text-size-adjust:100%;-webkit-text-size-adjust:100%}
+a{background:none}
+a:focus{outline:thin dotted}
+a:active,a:hover{outline:0}
+h1{font-size:2em;margin:.67em 0}
+abbr[title]{border-bottom:1px dotted}
+b,strong{font-weight:bold}
+dfn{font-style:italic}
+hr{-moz-box-sizing:content-box;box-sizing:content-box;height:0}
+mark{background:#ff0;color:#000}
+code,kbd,pre,samp{font-family:monospace;font-size:1em}
+pre{white-space:pre-wrap}
+q{quotes:"\201C" "\201D" "\2018" "\2019"}
+small{font-size:80%}
+sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}
+sup{top:-.5em}
+sub{bottom:-.25em}
+img{border:0}
+svg:not(:root){overflow:hidden}
+figure{margin:0}
+fieldset{border:1px solid silver;margin:0 2px;padding:.35em .625em .75em}
+legend{border:0;padding:0}
+button,input,select,textarea{font-family:inherit;font-size:100%;margin:0}
+button,input{line-height:normal}
+button,select{text-transform:none}
+button,html input[type="button"],input[type="reset"],input[type="submit"]{-webkit-appearance:button;cursor:pointer}
+button[disabled],html input[disabled]{cursor:default}
+input[type="checkbox"],input[type="radio"]{box-sizing:border-box;padding:0}
+button::-moz-focus-inner,input::-moz-focus-inner{border:0;padding:0}
+textarea{overflow:auto;vertical-align:top}
+table{border-collapse:collapse;border-spacing:0}
+*,*::before,*::after{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box}
+html,body{font-size:100%}
+body{background:#fff;color:rgba(0,0,0,.8);padding:0;margin:0;font-family:"Noto Serif","DejaVu Serif",serif;font-weight:400;font-style:normal;line-height:1;position:relative;cursor:auto;tab-size:4;-moz-osx-font-smoothing:grayscale;-webkit-font-smoothing:antialiased}
+a:hover{cursor:pointer}
+img,object,embed{max-width:100%;height:auto}
+object,embed{height:100%}
+img{-ms-interpolation-mode:bicubic}
+.left{float:left!important}
+.right{float:right!important}
+.text-left{text-align:left!important}
+.text-right{text-align:right!important}
+.text-center{text-align:center!important}
+.text-justify{text-align:justify!important}
+.hide{display:none}
+img,object,svg{display:inline-block;vertical-align:middle}
+textarea{height:auto;min-height:50px}
+select{width:100%}
+.center{margin-left:auto;margin-right:auto}
+.stretch{width:100%}
+.subheader,.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{line-height:1.45;color:#7a2518;font-weight:400;margin-top:0;margin-bottom:.25em}
+div,dl,dt,dd,ul,ol,li,h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6,pre,form,p,blockquote,th,td{margin:0;padding:0;direction:ltr}
+a{color:#2156a5;text-decoration:underline;line-height:inherit}
+a:hover,a:focus{color:#1d4b8f}
+a img{border:0}
+p{font-family:inherit;font-weight:400;font-size:1em;line-height:1.6;margin-bottom:1.25em;text-rendering:optimizeLegibility}
+p aside{font-size:.875em;line-height:1.35;font-style:italic}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{font-family:"Open Sans","DejaVu Sans",sans-serif;font-weight:300;font-style:normal;color:#ba3925;text-rendering:optimizeLegibility;margin-top:1em;margin-bottom:.5em;line-height:1.0125em}
+h1 small,h2 small,h3 small,#toctitle small,.sidebarblock>.content>.title small,h4 small,h5 small,h6 small{font-size:60%;color:#e99b8f;line-height:0}
+h1{font-size:2.125em}
+h2{font-size:1.6875em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.375em}
+h4,h5{font-size:1.125em}
+h6{font-size:1em}
+hr{border:solid #dddddf;border-width:1px 0 0;clear:both;margin:1.25em 0 1.1875em;height:0}
+em,i{font-style:italic;line-height:inherit}
+strong,b{font-weight:bold;line-height:inherit}
+small{font-size:60%;line-height:inherit}
+code{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;font-weight:400;color:rgba(0,0,0,.9)}
+ul,ol,dl{font-size:1em;line-height:1.6;margin-bottom:1.25em;list-style-position:outside;font-family:inherit}
+ul,ol{margin-left:1.5em}
+ul li ul,ul li ol{margin-left:1.25em;margin-bottom:0;font-size:1em}
+ul.square li ul,ul.circle li ul,ul.disc li ul{list-style:inherit}
+ul.square{list-style-type:square}
+ul.circle{list-style-type:circle}
+ul.disc{list-style-type:disc}
+ol li ul,ol li ol{margin-left:1.25em;margin-bottom:0}
+dl dt{margin-bottom:.3125em;font-weight:bold}
+dl dd{margin-bottom:1.25em}
+abbr,acronym{text-transform:uppercase;font-size:90%;color:rgba(0,0,0,.8);border-bottom:1px dotted #ddd;cursor:help}
+abbr{text-transform:none}
+blockquote{margin:0 0 1.25em;padding:.5625em 1.25em 0 1.1875em;border-left:1px solid #ddd}
+blockquote cite{display:block;font-size:.9375em;color:rgba(0,0,0,.6)}
+blockquote cite::before{content:"\2014 \0020"}
+blockquote cite a,blockquote cite a:visited{color:rgba(0,0,0,.6)}
+blockquote,blockquote p{line-height:1.6;color:rgba(0,0,0,.85)}
+@media screen and (min-width:768px){h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2}
+h1{font-size:2.75em}
+h2{font-size:2.3125em}
+h3,#toctitle,.sidebarblock>.content>.title{font-size:1.6875em}
+h4{font-size:1.4375em}}
+table{background:#fff;margin-bottom:1.25em;border:solid 1px #dedede}
+table thead,table tfoot{background:#f7f8f7}
+table thead tr th,table thead tr td,table tfoot tr th,table tfoot tr td{padding:.5em .625em .625em;font-size:inherit;color:rgba(0,0,0,.8);text-align:left}
+table tr th,table tr td{padding:.5625em .625em;font-size:inherit;color:rgba(0,0,0,.8)}
+table tr.even,table tr.alt{background:#f8f8f7}
+table thead tr th,table tfoot tr th,table tbody tr td,table tr td,table tfoot tr td{display:table-cell;line-height:1.6}
+h1,h2,h3,#toctitle,.sidebarblock>.content>.title,h4,h5,h6{line-height:1.2;word-spacing:-.05em}
+h1 strong,h2 strong,h3 strong,#toctitle strong,.sidebarblock>.content>.title strong,h4 strong,h5 strong,h6 strong{font-weight:400}
+.clearfix::before,.clearfix::after,.float-group::before,.float-group::after{content:" ";display:table}
+.clearfix::after,.float-group::after{clear:both}
+:not(pre):not([class^=L])>code{font-size:.9375em;font-style:normal!important;letter-spacing:0;padding:.1em .5ex;word-spacing:-.15em;background:#f7f7f8;-webkit-border-radius:4px;border-radius:4px;line-height:1.45;text-rendering:optimizeSpeed;word-wrap:break-word}
+:not(pre)>code.nobreak{word-wrap:normal}
+:not(pre)>code.nowrap{white-space:nowrap}
+pre{color:rgba(0,0,0,.9);font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;line-height:1.45;text-rendering:optimizeSpeed}
+pre code,pre pre{color:inherit;font-size:inherit;line-height:inherit}
+pre>code{display:block}
+pre.nowrap,pre.nowrap pre{white-space:pre;word-wrap:normal}
+em em{font-style:normal}
+strong strong{font-weight:400}
+.keyseq{color:rgba(51,51,51,.8)}
+kbd{font-family:"Droid Sans Mono","DejaVu Sans Mono",monospace;display:inline-block;color:rgba(0,0,0,.8);font-size:.65em;line-height:1.45;background:#f7f7f7;border:1px solid #ccc;-webkit-border-radius:3px;border-radius:3px;-webkit-box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em white inset;box-shadow:0 1px 0 rgba(0,0,0,.2),0 0 0 .1em #fff inset;margin:0 .15em;padding:.2em .5em;vertical-align:middle;position:relative;top:-.1em;white-space:nowrap}
+.keyseq kbd:first-child{margin-left:0}
+.keyseq kbd:last-child{margin-right:0}
+.menuseq,.menuref{color:#000}
+.menuseq b:not(.caret),.menuref{font-weight:inherit}
+.menuseq{word-spacing:-.02em}
+.menuseq b.caret{font-size:1.25em;line-height:.8}
+.menuseq i.caret{font-weight:bold;text-align:center;width:.45em}
+b.button::before,b.button::after{position:relative;top:-1px;font-weight:400}
+b.button::before{content:"[";padding:0 3px 0 2px}
+b.button::after{content:"]";padding:0 2px 0 3px}
+p a>code:hover{color:rgba(0,0,0,.9)}
+#header,#content,#footnotes,#footer{width:100%;margin-left:auto;margin-right:auto;margin-top:0;margin-bottom:0;max-width:62.5em;*zoom:1;position:relative;padding-left:.9375em;padding-right:.9375em}
+#header::before,#header::after,#content::before,#content::after,#footnotes::before,#footnotes::after,#footer::before,#footer::after{content:" ";display:table}
+#header::after,#content::after,#footnotes::after,#footer::after{clear:both}
+#content{margin-top:1.25em}
+#content::before{content:none}
+#header>h1:first-child{color:rgba(0,0,0,.85);margin-top:2.25rem;margin-bottom:0}
+#header>h1:first-child+#toc{margin-top:8px;border-top:1px solid #dddddf}
+#header>h1:only-child,body.toc2 #header>h1:nth-last-child(2){border-bottom:1px solid #dddddf;padding-bottom:8px}
+#header .details{border-bottom:1px solid #dddddf;line-height:1.45;padding-top:.25em;padding-bottom:.25em;padding-left:.25em;color:rgba(0,0,0,.6);display:-ms-flexbox;display:-webkit-flex;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap}
+#header .details span:first-child{margin-left:-.125em}
+#header .details span.email a{color:rgba(0,0,0,.85)}
+#header .details br{display:none}
+#header .details br+span::before{content:"\00a0\2013\00a0"}
+#header .details br+span.author::before{content:"\00a0\22c5\00a0";color:rgba(0,0,0,.85)}
+#header .details br+span#revremark::before{content:"\00a0|\00a0"}
+#header #revnumber{text-transform:capitalize}
+#header #revnumber::after{content:"\00a0"}
+#content>h1:first-child:not([class]){color:rgba(0,0,0,.85);border-bottom:1px solid #dddddf;padding-bottom:8px;margin-top:0;padding-top:1rem;margin-bottom:1.25rem}
+#toc{border-bottom:1px solid #e7e7e9;padding-bottom:.5em}
+#toc>ul{margin-left:.125em}
+#toc ul.sectlevel0>li>a{font-style:italic}
+#toc ul.sectlevel0 ul.sectlevel1{margin:.5em 0}
+#toc ul{font-family:"Open Sans","DejaVu Sans",sans-serif;list-style-type:none}
+#toc li{line-height:1.3334;margin-top:.3334em}
+#toc a{text-decoration:none}
+#toc a:active{text-decoration:underline}
+#toctitle{color:#7a2518;font-size:1.2em}
+@media screen and (min-width:768px){#toctitle{font-size:1.375em}
+body.toc2{padding-left:15em;padding-right:0}
+#toc.toc2{margin-top:0!important;background:#f8f8f7;position:fixed;width:15em;left:0;top:0;border-right:1px solid #e7e7e9;border-top-width:0!important;border-bottom-width:0!important;z-index:1000;padding:1.25em 1em;height:100%;overflow:auto}
+#toc.toc2 #toctitle{margin-top:0;margin-bottom:.8rem;font-size:1.2em}
+#toc.toc2>ul{font-size:.9em;margin-bottom:0}
+#toc.toc2 ul ul{margin-left:0;padding-left:1em}
+#toc.toc2 ul.sectlevel0 ul.sectlevel1{padding-left:0;margin-top:.5em;margin-bottom:.5em}
+body.toc2.toc-right{padding-left:0;padding-right:15em}
+body.toc2.toc-right #toc.toc2{border-right-width:0;border-left:1px solid #e7e7e9;left:auto;right:0}}
+@media screen and (min-width:1280px){body.toc2{padding-left:20em;padding-right:0}
+#toc.toc2{width:20em}
+#toc.toc2 #toctitle{font-size:1.375em}
+#toc.toc2>ul{font-size:.95em}
+#toc.toc2 ul ul{padding-left:1.25em}
+body.toc2.toc-right{padding-left:0;padding-right:20em}}
+#content #toc{border-style:solid;border-width:1px;border-color:#e0e0dc;margin-bottom:1.25em;padding:1.25em;background:#f8f8f7;-webkit-border-radius:4px;border-radius:4px}
+#content #toc>:first-child{margin-top:0}
+#content #toc>:last-child{margin-bottom:0}
+#footer{max-width:100%;background:rgba(0,0,0,.8);padding:1.25em}
+#footer-text{color:rgba(255,255,255,.8);line-height:1.44}
+#content{margin-bottom:.625em}
+.sect1{padding-bottom:.625em}
+@media screen and (min-width:768px){#content{margin-bottom:1.25em}
+.sect1{padding-bottom:1.25em}}
+.sect1:last-child{padding-bottom:0}
+.sect1+.sect1{border-top:1px solid #e7e7e9}
+#content h1>a.anchor,h2>a.anchor,h3>a.anchor,#toctitle>a.anchor,.sidebarblock>.content>.title>a.anchor,h4>a.anchor,h5>a.anchor,h6>a.anchor{position:absolute;z-index:1001;width:1.5ex;margin-left:-1.5ex;display:block;text-decoration:none!important;visibility:hidden;text-align:center;font-weight:400}
+#content h1>a.anchor::before,h2>a.anchor::before,h3>a.anchor::before,#toctitle>a.anchor::before,.sidebarblock>.content>.title>a.anchor::before,h4>a.anchor::before,h5>a.anchor::before,h6>a.anchor::before{content:"\00A7";font-size:.85em;display:block;padding-top:.1em}
+#content h1:hover>a.anchor,#content h1>a.anchor:hover,h2:hover>a.anchor,h2>a.anchor:hover,h3:hover>a.anchor,#toctitle:hover>a.anchor,.sidebarblock>.content>.title:hover>a.anchor,h3>a.anchor:hover,#toctitle>a.anchor:hover,.sidebarblock>.content>.title>a.anchor:hover,h4:hover>a.anchor,h4>a.anchor:hover,h5:hover>a.anchor,h5>a.anchor:hover,h6:hover>a.anchor,h6>a.anchor:hover{visibility:visible}
+#content h1>a.link,h2>a.link,h3>a.link,#toctitle>a.link,.sidebarblock>.content>.title>a.link,h4>a.link,h5>a.link,h6>a.link{color:#ba3925;text-decoration:none}
+#content h1>a.link:hover,h2>a.link:hover,h3>a.link:hover,#toctitle>a.link:hover,.sidebarblock>.content>.title>a.link:hover,h4>a.link:hover,h5>a.link:hover,h6>a.link:hover{color:#a53221}
+details,.audioblock,.imageblock,.literalblock,.listingblock,.stemblock,.videoblock{margin-bottom:1.25em}
+details>summary:first-of-type{cursor:pointer;display:list-item;outline:none;margin-bottom:.75em}
+.admonitionblock td.content>.title,.audioblock>.title,.exampleblock>.title,.imageblock>.title,.listingblock>.title,.literalblock>.title,.stemblock>.title,.openblock>.title,.paragraph>.title,.quoteblock>.title,table.tableblock>.title,.verseblock>.title,.videoblock>.title,.dlist>.title,.olist>.title,.ulist>.title,.qlist>.title,.hdlist>.title{text-rendering:optimizeLegibility;text-align:left;font-family:"Noto Serif","DejaVu Serif",serif;font-size:1rem;font-style:italic}
+table.tableblock.fit-content>caption.title{white-space:nowrap;width:0}
+.paragraph.lead>p,#preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:1.21875em;line-height:1.6;color:rgba(0,0,0,.85)}
+table.tableblock #preamble>.sectionbody>[class="paragraph"]:first-of-type p{font-size:inherit}
+.admonitionblock>table{border-collapse:separate;border:0;background:none;width:100%}
+.admonitionblock>table td.icon{text-align:center;width:80px}
+.admonitionblock>table td.icon img{max-width:none}
+.admonitionblock>table td.icon .title{font-weight:bold;font-family:"Open Sans","DejaVu Sans",sans-serif;text-transform:uppercase}
+.admonitionblock>table td.content{padding-left:1.125em;padding-right:1.25em;border-left:1px solid #dddddf;color:rgba(0,0,0,.6)}
+.admonitionblock>table td.content>:last-child>:last-child{margin-bottom:0}
+.exampleblock>.content{border-style:solid;border-width:1px;border-color:#e6e6e6;margin-bottom:1.25em;padding:1.25em;background:#fff;-webkit-border-radius:4px;border-radius:4px}
+.exampleblock>.content>:first-child{margin-top:0}
+.exampleblock>.content>:last-child{margin-bottom:0}
+.sidebarblock{border-style:solid;border-width:1px;border-color:#dbdbd6;margin-bottom:1.25em;padding:1.25em;background:#f3f3f2;-webkit-border-radius:4px;border-radius:4px}
+.sidebarblock>:first-child{margin-top:0}
+.sidebarblock>:last-child{margin-bottom:0}
+.sidebarblock>.content>.title{color:#7a2518;margin-top:0;text-align:center}
+.exampleblock>.content>:last-child>:last-child,.exampleblock>.content .olist>ol>li:last-child>:last-child,.exampleblock>.content .ulist>ul>li:last-child>:last-child,.exampleblock>.content .qlist>ol>li:last-child>:last-child,.sidebarblock>.content>:last-child>:last-child,.sidebarblock>.content .olist>ol>li:last-child>:last-child,.sidebarblock>.content .ulist>ul>li:last-child>:last-child,.sidebarblock>.content .qlist>ol>li:last-child>:last-child{margin-bottom:0}
+.literalblock pre,.listingblock>.content>pre{-webkit-border-radius:4px;border-radius:4px;word-wrap:break-word;overflow-x:auto;padding:1em;font-size:.8125em}
+@media screen and (min-width:768px){.literalblock pre,.listingblock>.content>pre{font-size:.90625em}}
+@media screen and (min-width:1280px){.literalblock pre,.listingblock>.content>pre{font-size:1em}}
+.literalblock pre,.listingblock>.content>pre:not(.highlight),.listingblock>.content>pre[class="highlight"],.listingblock>.content>pre[class^="highlight "]{background:#f7f7f8}
+.literalblock.output pre{color:#f7f7f8;background:rgba(0,0,0,.9)}
+.listingblock>.content{position:relative}
+.listingblock code[data-lang]::before{display:none;content:attr(data-lang);position:absolute;font-size:.75em;top:.425rem;right:.5rem;line-height:1;text-transform:uppercase;color:inherit;opacity:.5}
+.listingblock:hover code[data-lang]::before{display:block}
+.listingblock.terminal pre .command::before{content:attr(data-prompt);padding-right:.5em;color:inherit;opacity:.5}
+.listingblock.terminal pre .command:not([data-prompt])::before{content:"$"}
+.listingblock pre.highlightjs{padding:0}
+.listingblock pre.highlightjs>code{padding:1em;-webkit-border-radius:4px;border-radius:4px}
+.listingblock pre.prettyprint{border-width:0}
+.prettyprint{background:#f7f7f8}
+pre.prettyprint .linenums{line-height:1.45;margin-left:2em}
+pre.prettyprint li{background:none;list-style-type:inherit;padding-left:0}
+pre.prettyprint li code[data-lang]::before{opacity:1}
+pre.prettyprint li:not(:first-child) code[data-lang]::before{display:none}
+table.linenotable{border-collapse:separate;border:0;margin-bottom:0;background:none}
+table.linenotable td[class]{color:inherit;vertical-align:top;padding:0;line-height:inherit;white-space:normal}
+table.linenotable td.code{padding-left:.75em}
+table.linenotable td.linenos{border-right:1px solid currentColor;opacity:.35;padding-right:.5em}
+pre.pygments .lineno{border-right:1px solid currentColor;opacity:.35;display:inline-block;margin-right:.75em}
+pre.pygments .lineno::before{content:"";margin-right:-.125em}
+.quoteblock{margin:0 1em 1.25em 1.5em;display:table}
+.quoteblock>.title{margin-left:-1.5em;margin-bottom:.75em}
+.quoteblock blockquote,.quoteblock p{color:rgba(0,0,0,.85);font-size:1.15rem;line-height:1.75;word-spacing:.1em;letter-spacing:0;font-style:italic;text-align:justify}
+.quoteblock blockquote{margin:0;padding:0;border:0}
+.quoteblock blockquote::before{content:"\201c";float:left;font-size:2.75em;font-weight:bold;line-height:.6em;margin-left:-.6em;color:#7a2518;text-shadow:0 1px 2px rgba(0,0,0,.1)}
+.quoteblock blockquote>.paragraph:last-child p{margin-bottom:0}
+.quoteblock .attribution{margin-top:.75em;margin-right:.5ex;text-align:right}
+.verseblock{margin:0 1em 1.25em}
+.verseblock pre{font-family:"Open Sans","DejaVu Sans",sans;font-size:1.15rem;color:rgba(0,0,0,.85);font-weight:300;text-rendering:optimizeLegibility}
+.verseblock pre strong{font-weight:400}
+.verseblock .attribution{margin-top:1.25rem;margin-left:.5ex}
+.quoteblock .attribution,.verseblock .attribution{font-size:.9375em;line-height:1.45;font-style:italic}
+.quoteblock .attribution br,.verseblock .attribution br{display:none}
+.quoteblock .attribution cite,.verseblock .attribution cite{display:block;letter-spacing:-.025em;color:rgba(0,0,0,.6)}
+.quoteblock.abstract blockquote::before,.quoteblock.excerpt blockquote::before,.quoteblock .quoteblock blockquote::before{display:none}
+.quoteblock.abstract blockquote,.quoteblock.abstract p,.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{line-height:1.6;word-spacing:0}
+.quoteblock.abstract{margin:0 1em 1.25em;display:block}
+.quoteblock.abstract>.title{margin:0 0 .375em;font-size:1.15em;text-align:center}
+.quoteblock.excerpt,.quoteblock .quoteblock{margin:0 0 1.25em;padding:0 0 .25em 1em;border-left:.25em solid #dddddf}
+.quoteblock.excerpt blockquote,.quoteblock.excerpt p,.quoteblock .quoteblock blockquote,.quoteblock .quoteblock p{color:inherit;font-size:1.0625rem}
+.quoteblock.excerpt .attribution,.quoteblock .quoteblock .attribution{color:inherit;text-align:left;margin-right:0}
+table.tableblock{max-width:100%;border-collapse:separate}
+p.tableblock:last-child{margin-bottom:0}
+td.tableblock>.content>:last-child{margin-bottom:-1.25em}
+td.tableblock>.content>:last-child.sidebarblock{margin-bottom:0}
+table.tableblock,th.tableblock,td.tableblock{border:0 solid #dedede}
+table.grid-all>thead>tr>.tableblock,table.grid-all>tbody>tr>.tableblock{border-width:0 1px 1px 0}
+table.grid-all>tfoot>tr>.tableblock{border-width:1px 1px 0 0}
+table.grid-cols>*>tr>.tableblock{border-width:0 1px 0 0}
+table.grid-rows>thead>tr>.tableblock,table.grid-rows>tbody>tr>.tableblock{border-width:0 0 1px}
+table.grid-rows>tfoot>tr>.tableblock{border-width:1px 0 0}
+table.grid-all>*>tr>.tableblock:last-child,table.grid-cols>*>tr>.tableblock:last-child{border-right-width:0}
+table.grid-all>tbody>tr:last-child>.tableblock,table.grid-all>thead:last-child>tr>.tableblock,table.grid-rows>tbody>tr:last-child>.tableblock,table.grid-rows>thead:last-child>tr>.tableblock{border-bottom-width:0}
+table.frame-all{border-width:1px}
+table.frame-sides{border-width:0 1px}
+table.frame-topbot,table.frame-ends{border-width:1px 0}
+table.stripes-all tr,table.stripes-odd tr:nth-of-type(odd),table.stripes-even tr:nth-of-type(even),table.stripes-hover tr:hover{background:#f8f8f7}
+th.halign-left,td.halign-left{text-align:left}
+th.halign-right,td.halign-right{text-align:right}
+th.halign-center,td.halign-center{text-align:center}
+th.valign-top,td.valign-top{vertical-align:top}
+th.valign-bottom,td.valign-bottom{vertical-align:bottom}
+th.valign-middle,td.valign-middle{vertical-align:middle}
+table thead th,table tfoot th{font-weight:bold}
+tbody tr th{display:table-cell;line-height:1.6;background:#f7f8f7}
+tbody tr th,tbody tr th p,tfoot tr th,tfoot tr th p{color:rgba(0,0,0,.8);font-weight:bold}
+p.tableblock>code:only-child{background:none;padding:0}
+p.tableblock{font-size:1em}
+ol{margin-left:1.75em}
+ul li ol{margin-left:1.5em}
+dl dd{margin-left:1.125em}
+dl dd:last-child,dl dd:last-child>:last-child{margin-bottom:0}
+ol>li p,ul>li p,ul dd,ol dd,.olist .olist,.ulist .ulist,.ulist .olist,.olist .ulist{margin-bottom:.625em}
+ul.checklist,ul.none,ol.none,ul.no-bullet,ol.no-bullet,ol.unnumbered,ul.unstyled,ol.unstyled{list-style-type:none}
+ul.no-bullet,ol.no-bullet,ol.unnumbered{margin-left:.625em}
+ul.unstyled,ol.unstyled{margin-left:0}
+ul.checklist{margin-left:.625em}
+ul.checklist li>p:first-child>.fa-square-o:first-child,ul.checklist li>p:first-child>.fa-check-square-o:first-child{width:1.25em;font-size:.8em;position:relative;bottom:.125em}
+ul.checklist li>p:first-child>input[type="checkbox"]:first-child{margin-right:.25em}
+ul.inline{display:-ms-flexbox;display:-webkit-box;display:flex;-ms-flex-flow:row wrap;-webkit-flex-flow:row wrap;flex-flow:row wrap;list-style:none;margin:0 0 .625em -1.25em}
+ul.inline>li{margin-left:1.25em}
+.unstyled dl dt{font-weight:400;font-style:normal}
+ol.arabic{list-style-type:decimal}
+ol.decimal{list-style-type:decimal-leading-zero}
+ol.loweralpha{list-style-type:lower-alpha}
+ol.upperalpha{list-style-type:upper-alpha}
+ol.lowerroman{list-style-type:lower-roman}
+ol.upperroman{list-style-type:upper-roman}
+ol.lowergreek{list-style-type:lower-greek}
+.hdlist>table,.colist>table{border:0;background:none}
+.hdlist>table>tbody>tr,.colist>table>tbody>tr{background:none}
+td.hdlist1,td.hdlist2{vertical-align:top;padding:0 .625em}
+td.hdlist1{font-weight:bold;padding-bottom:1.25em}
+.literalblock+.colist,.listingblock+.colist{margin-top:-.5em}
+.colist td:not([class]):first-child{padding:.4em .75em 0;line-height:1;vertical-align:top}
+.colist td:not([class]):first-child img{max-width:none}
+.colist td:not([class]):last-child{padding:.25em 0}
+.thumb,.th{line-height:0;display:inline-block;border:solid 4px #fff;-webkit-box-shadow:0 0 0 1px #ddd;box-shadow:0 0 0 1px #ddd}
+.imageblock.left{margin:.25em .625em 1.25em 0}
+.imageblock.right{margin:.25em 0 1.25em .625em}
+.imageblock>.title{margin-bottom:0}
+.imageblock.thumb,.imageblock.th{border-width:6px}
+.imageblock.thumb>.title,.imageblock.th>.title{padding:0 .125em}
+.image.left,.image.right{margin-top:.25em;margin-bottom:.25em;display:inline-block;line-height:0}
+.image.left{margin-right:.625em}
+.image.right{margin-left:.625em}
+a.image{text-decoration:none;display:inline-block}
+a.image object{pointer-events:none}
+sup.footnote,sup.footnoteref{font-size:.875em;position:static;vertical-align:super}
+sup.footnote a,sup.footnoteref a{text-decoration:none}
+sup.footnote a:active,sup.footnoteref a:active{text-decoration:underline}
+#footnotes{padding-top:.75em;padding-bottom:.75em;margin-bottom:.625em}
+#footnotes hr{width:20%;min-width:6.25em;margin:-.25em 0 .75em;border-width:1px 0 0}
+#footnotes .footnote{padding:0 .375em 0 .225em;line-height:1.3334;font-size:.875em;margin-left:1.2em;margin-bottom:.2em}
+#footnotes .footnote a:first-of-type{font-weight:bold;text-decoration:none;margin-left:-1.05em}
+#footnotes .footnote:last-of-type{margin-bottom:0}
+#content #footnotes{margin-top:-.625em;margin-bottom:0;padding:.75em 0}
+.gist .file-data>table{border:0;background:#fff;width:100%;margin-bottom:0}
+.gist .file-data>table td.line-data{width:99%}
+div.unbreakable{page-break-inside:avoid}
+.big{font-size:larger}
+.small{font-size:smaller}
+.underline{text-decoration:underline}
+.overline{text-decoration:overline}
+.line-through{text-decoration:line-through}
+.aqua{color:#00bfbf}
+.aqua-background{background:#00fafa}
+.black{color:#000}
+.black-background{background:#000}
+.blue{color:#0000bf}
+.blue-background{background:#0000fa}
+.fuchsia{color:#bf00bf}
+.fuchsia-background{background:#fa00fa}
+.gray{color:#606060}
+.gray-background{background:#7d7d7d}
+.green{color:#006000}
+.green-background{background:#007d00}
+.lime{color:#00bf00}
+.lime-background{background:#00fa00}
+.maroon{color:#600000}
+.maroon-background{background:#7d0000}
+.navy{color:#000060}
+.navy-background{background:#00007d}
+.olive{color:#606000}
+.olive-background{background:#7d7d00}
+.purple{color:#600060}
+.purple-background{background:#7d007d}
+.red{color:#bf0000}
+.red-background{background:#fa0000}
+.silver{color:#909090}
+.silver-background{background:#bcbcbc}
+.teal{color:#006060}
+.teal-background{background:#007d7d}
+.white{color:#bfbfbf}
+.white-background{background:#fafafa}
+.yellow{color:#bfbf00}
+.yellow-background{background:#fafa00}
+span.icon>.fa{cursor:default}
+a span.icon>.fa{cursor:inherit}
+.admonitionblock td.icon [class^="fa icon-"]{font-size:2.5em;text-shadow:1px 1px 2px rgba(0,0,0,.5);cursor:default}
+.admonitionblock td.icon .icon-note::before{content:"\f05a";color:#19407c}
+.admonitionblock td.icon .icon-tip::before{content:"\f0eb";text-shadow:1px 1px 2px rgba(155,155,0,.8);color:#111}
+.admonitionblock td.icon .icon-warning::before{content:"\f071";color:#bf6900}
+.admonitionblock td.icon .icon-caution::before{content:"\f06d";color:#bf3400}
+.admonitionblock td.icon .icon-important::before{content:"\f06a";color:#bf0000}
+.conum[data-value]{display:inline-block;color:#fff!important;background:rgba(0,0,0,.8);-webkit-border-radius:100px;border-radius:100px;text-align:center;font-size:.75em;width:1.67em;height:1.67em;line-height:1.67em;font-family:"Open Sans","DejaVu Sans",sans-serif;font-style:normal;font-weight:bold}
+.conum[data-value] *{color:#fff!important}
+.conum[data-value]+b{display:none}
+.conum[data-value]::after{content:attr(data-value)}
+pre .conum[data-value]{position:relative;top:-.125em}
+b.conum *{color:inherit!important}
+.conum:not([data-value]):empty{display:none}
+dt,th.tableblock,td.content,div.footnote{text-rendering:optimizeLegibility}
+h1,h2,p,td.content,span.alt{letter-spacing:-.01em}
+p strong,td.content strong,div.footnote strong{letter-spacing:-.005em}
+p,blockquote,dt,td.content,span.alt{font-size:1.0625rem}
+p{margin-bottom:1.25rem}
+.sidebarblock p,.sidebarblock dt,.sidebarblock td.content,p.tableblock{font-size:1em}
+.exampleblock>.content{background:#fffef7;border-color:#e0e0dc;-webkit-box-shadow:0 1px 4px #e0e0dc;box-shadow:0 1px 4px #e0e0dc}
+.print-only{display:none!important}
+@page{margin:1.25cm .75cm}
+@media print{*{-webkit-box-shadow:none!important;box-shadow:none!important;text-shadow:none!important}
+html{font-size:80%}
+a{color:inherit!important;text-decoration:underline!important}
+a.bare,a[href^="#"],a[href^="mailto:"]{text-decoration:none!important}
+a[href^="http:"]:not(.bare)::after,a[href^="https:"]:not(.bare)::after{content:"(" attr(href) ")";display:inline-block;font-size:.875em;padding-left:.25em}
+abbr[title]::after{content:" (" attr(title) ")"}
+pre,blockquote,tr,img,object,svg{page-break-inside:avoid}
+thead{display:table-header-group}
+svg{max-width:100%}
+p,blockquote,dt,td.content{font-size:1em;orphans:3;widows:3}
+h2,h3,#toctitle,.sidebarblock>.content>.title{page-break-after:avoid}
+#toc,.sidebarblock,.exampleblock>.content{background:none!important}
+#toc{border-bottom:1px solid #dddddf!important;padding-bottom:0!important}
+body.book #header{text-align:center}
+body.book #header>h1:first-child{border:0!important;margin:2.5em 0 1em}
+body.book #header .details{border:0!important;display:block;padding:0!important}
+body.book #header .details span:first-child{margin-left:0!important}
+body.book #header .details br{display:block}
+body.book #header .details br+span::before{content:none!important}
+body.book #toc{border:0!important;text-align:left!important;padding:0!important;margin:0!important}
+body.book #toc,body.book #preamble,body.book h1.sect0,body.book .sect1>h2{page-break-before:always}
+.listingblock code[data-lang]::before{display:block}
+#footer{padding:0 .9375em}
+.hide-on-print{display:none!important}
+.print-only{display:block!important}
+.hide-for-print{display:none!important}
+.show-for-print{display:inherit!important}}
+@media print,amzn-kf8{#header>h1:first-child{margin-top:1.25rem}
+.sect1{padding:0!important}
+.sect1+.sect1{border:0}
+#footer{background:none}
+#footer-text{color:rgba(0,0,0,.6);font-size:.9em}}
+@media amzn-kf8{#header,#content,#footnotes,#footer{padding:0}}
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
+<body class="article">
+<div id="header">
+<h1>Singleton Paternin C#'da Uygulanması</h1>
+<div class="details">
+<span id="author" class="author">Yasir Erkam Özdemir</span><br>
+</div>
+</div>
+<div id="content">
+<div class="sect1">
+<h2 id="icindekiler-section"><a class="anchor" href="#icindekiler-section"></a><a class="link" href="#icindekiler-section">İçindekiler</a></h2>
+<div class="sectionbody">
+<div class="olist arabic">
+<ol class="arabic">
+<li>
+<p><a href="#truegiriş">Giriş</a></p>
+</li>
+<li>
+<p><a href="#true1-versiyon-thread-iş-parçacığı-için-güvenli-olmayan-sürüm">1. Versiyon - Thread (İş parçacığı) İçin Güvenli Olmayan Sürüm</a></p>
+</li>
+<li>
+<p><a href="#true2-versiyon-basit-thread-güvenli">2. Versiyon - Basit Thread Güvenli</a></p>
+</li>
+<li>
+<p><a href="#true3-versiyon-çift-kontrol-kilidi-kullanarak-thread-güvenliği-denemesi">3. Versiyon - Çift Kontrol Kilidi Kullanarak Thread Güvenliği Denemesi</a></p>
+</li>
+<li>
+<p><a href="#_dorduncu_versiyon-section">4. Versiyon - Lazy Değil, Kilitleri Kullanmadan Thread Güvenli</a></p>
+</li>
+<li>
+<p><a href="#true5-versiyon-tamamen-tembellazy-örnekleme">5. Versiyon - Tamamen Tembel(Lazy) Örnekleme</a></p>
+</li>
+<li>
+<p><a href="#_altinci_versiyon-section">6. Versiyon - .NET 4&#8217;ün Lazy&lt;T&gt; Tipini Kullanarak</a></p>
+</li>
+<li>
+<p><a href="#trueperformans-vs-laziness">Performans vs Laziness</a></p>
+</li>
+<li>
+<p><a href="#trueistisnalar">İstisnalar</a></p>
+</li>
+<li>
+<p><a href="#_sonuc-section">Sonuç (7 Ocak 2006&#8217;da biraz değiştirildi; 12 Şubat 2011&#8217;de güncellendi)</a></p>
+</li>
+</ol>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="truegiriş"><a class="anchor" href="#truegiriş"></a><a class="link" href="#truegiriş">Giriş</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Singleton paterni, yazılım mühendisliğinde en iyi bilinen paternlerden biridir. Esasen, bir singleton, yalnızca kendisinin tek bir örneğinin oluşturulmasına izin veren ve genellikle bu örneğe (Instance) kolay erişim sağlayan bir sınıftır. En yaygın olarak, singletonlar örneği(Instance) oluştururken herhangi bir parametrenin belirtilmesine izin vermez - aksi halde bir örnek için farklı bir parametreye sahip ikinci bir istek sorunlu olabilir! (Aynı parametreye sahip tüm istekler için aynı örneğe erişilmesi gerekiyorsa, fabrika modeli daha uygundur.) Bu makalede yalnızca hiçbir parametrenin gerekli olmadığı durum ele alınmaktadır. Tipik olarak singletonların bir şartı tembel (lazy) olarak yaratılmasıdır - yani ilk ihtiyaç olana kadar örneğin yaratılmamasıdır.</p>
+</div>
+<div class="paragraph">
+<p>C# 'da singleton desenini uygulamanın çeşitli yolları vardır. Onları burada, en yaygın görülen, thread için güvenli olmayandan, tamamen tembel olarak yüklenen, thread için güvenli, basit ve yüksek performanslı bir versiyona kadar zarafet sırasına göre sunacağım.</p>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Bununla birlikte, tüm bu uygulamalar dört ortak özelliğe sahiptir</dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>Özel ve parametresiz tek bir kurucu. Bu, diğer sınıfların onu örneklemesini (instance) önler (Ki bu, singleton deseninin ihlali anlamına gelir). Alt sınıflamayı da önlediğine dikkat edin - eğer bir singleton bir kez alt sınıflara ayrılabilirse, ikinci kez de alt sınıflara ayrılabilir ve bu alt sınıfların her biri bir örnek oluşturabilirse, yine singleton deseni ihlal edilir. Fabrika Deseni (Factory Design), bir taban türünün tek bir örneğine ihtiyacınız varsa kullanılabilir, ancak bu desende tam tür çalışma zamanına kadar bilinmez.</p>
+</li>
+<li>
+<p>Sınıf mühürlenmiştir (sealed). Yukarıdaki noktadan dolayı bu kesinlikle gereksizdir, ancak JIT&#8217;in işleri daha iyi hale getirmesine yardımcı olabilir.</p>
+</li>
+<li>
+<p>Varsa, bir kez oluşturulan örneğe başvuru tutan statik değişken.</p>
+</li>
+<li>
+<p>"public statik" oluşturulan tek bir örneğe referans almak anlamına gelir.</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>Tüm bu uygulamaların, örneğe erişme aracı olarak bir ortak statik özellik (property) örneği (instance) kullandığını unutmayın. Her durumda, özellik thread güvenliği veya performansı üzerinde hiçbir etkisi olmayan bir yönteme kolayca dönüştürülebilir.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true1-versiyon-thread-iş-parçacığı-için-güvenli-olmayan-sürüm"><a class="anchor" href="#true1-versiyon-thread-iş-parçacığı-için-güvenli-olmayan-sürüm"></a><a class="link" href="#true1-versiyon-thread-iş-parçacığı-için-güvenli-olmayan-sürüm">1. Versiyon - Thread (İş parçacığı) İçin Güvenli Olmayan Sürüm</a></h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="csharp" class="language-csharp hljs">// Kullanma! Kötü kod.
+public sealed class Singleton
+{
+    private static Singleton instance = null;
+
+    private Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = new Singleton();
+            }
+            return instance;
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Daha önce ima edildiği gibi, yukarıdaki thread güvenli değildir. İki farklı thread If testini <code>(instance == null)</code> değerlendirebilirdi ve doğru bulabilirdi, sorna her ikisi de singleton desenini ihlal eden örnekler oluştururdu. Aslında, örnek (instance), ifade değerlendirilmeden önce oluşturulmuş olabilir, ancak bellek modeli, uygun bellek engelleri geçilmedikçe yeni örnek değerinin diğer threadler tarafından görüleceğini garanti etmez.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true2-versiyon-basit-thread-güvenli"><a class="anchor" href="#true2-versiyon-basit-thread-güvenli"></a><a class="link" href="#true2-versiyon-basit-thread-güvenli">2. Versiyon - Basit Thread Güvenli</a></h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="csharp" class="language-csharp hljs">public sealed class Singleton
+{
+    private static Singleton instance = null;
+    private static readonly object padlock = new object();
+
+    Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            lock (padlock)
+            {
+                if (instance == null)
+                {
+                    instance = new Singleton();
+                }
+                return instance;
+            }
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Bu uygulama thread için güvenlidir. Thread, paylaşılan bir nesne üzerinde bir kilit alır ve sonra örneği oluşturmadan önce örneğin oluşturulmuş olup olmadığını denetler. Bu, bellek bariyeri sorunuyla ilgilenir (kilitleme, kilit alındıktan sonra tüm okumaların mantıksal olarak gerçekleşmesini sağlar ve kilidin açılması, tüm yazma işlemlerinin kilit serbest bırakılmadan önce mantıksal olarak gerçekleşmesini sağlar) ve yalnızca bir threadin bir örnek(instance) oluşturmasını sağlar (yalnızca bir thread tek seferde kodun o bölümünde olabilir - ikinci thread girdiği zaman, ilk thread, örneği(instance) zaten oluşturmuş olur, böylece <code>if (instance == null)</code> ifadesi false olarak değerlendirilir). Ne yazık ki bu versiyonda, örnek her istendiğinde bir kilit alındığı için performans düşer.</p>
+</div>
+<div class="paragraph">
+<p>Bu uygulamanın bazı versiyonlarında olduğu gibi typeof (Singleton) üzerine kilitlemek yerine, sınıfa özel(private) statik değişkenin (<code>padlock</code>) değerinin kilitlendiğini unutmayın. Diğer sınıfların erişebileceği ve üzerine kilitleyebileceği nesnelerin (type gibi) kilitlenmesi, performans sorunları ve hatta kilitlenme riskiyleriyle karşı karşıyadır. Bu, genel bir stil tercihidir. Mümkünse, sadece kilitleme amacıyla özel olarak oluşturulmuş veya belirli amaçlar için kilitlenecekleri belgeler (örneğin bir kuyruğu beklemek / atmak için) üzerine kilitleyin. Genellikle bu nesneler kullanıldıkları sınıfa özel(private) olmalıdır. Bu, thread için güvenli uygulamalar yazmayı önemli ölçüde kolaylaştırır.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true3-versiyon-çift-kontrol-kilidi-kullanarak-thread-güvenliği-denemesi"><a class="anchor" href="#true3-versiyon-çift-kontrol-kilidi-kullanarak-thread-güvenliği-denemesi"></a><a class="link" href="#true3-versiyon-çift-kontrol-kilidi-kullanarak-thread-güvenliği-denemesi">3. Versiyon - Çift Kontrol Kilidi Kullanarak Thread Güvenliği Denemesi</a></h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="csharp" class="language-csharp hljs">// Kullanma! Kötü kod.
+public sealed class Singleton
+{
+    private static Singleton instance = null;
+    private static readonly object padlock = new object();
+
+    Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                lock (padlock)
+                {
+                    if (instance == null)
+                    {
+                        instance = new Singleton();
+                    }
+                }
+            }
+            return instance;
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Bu uygulama her seferinde bir kilit almaya gerek kalmadan thread için güvenli olmaya çalışır. Ne yazık ki, desenin dört dezavantajı vardır: </dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>Java ile çalışmaz. Bu, yorum yapmak için garip bir şey gibi görünebilir, ancak Java&#8217;da bu singleton desene ihtiyacınız olup olmadığını bilmeye değer ve C# programcıları da Java programcıları olabilir. Java bellek modeli, yeni nesneye yapılan başvuru (referans), örneğe(instance) atanmadan önce kurucunun tamamlanmasını garanti etmez. Java bellek modeli sürüm 1.5 için yeniden işleme tabi tutuldu, ancak bundan sonra bile çift kontrollü kilitleme, geçici bir değişken olmadan (C#'da olduğu gibi) hala bozuktur.</p>
+</li>
+<li>
+<p>Herhangi bir bellek engeli olmadan, ECMA CLI spesifikasyonunda da bozuktur. .NET 2.0 bellek modeli (ECMA özelliklerinden daha güçlü) altında güvenli olması mümkündür, ama bu güçlü semantiğe güvenmemeyi tercih ederim, özellikle de güvenlik konusunda herhangi bir şüphe varsa. Örnek değişkenini(<code>instance</code>) geçici yapmak, çalışmasını sağlayabilir, açık bellek engelleme çağrıları gibi, ancak ikinci durumda uzmanlar bile hangi engellerin gerekli olduğunu tam olarak kabul edemezler. Uzmanların neyin doğru neyin yanlış olduğunu kabul etmediği durumlardan kaçınma eğilimindeyim!</p>
+</li>
+<li>
+<p>Yanlış anlaşılması kolaydır. Desenin hemen hemen yukarıdaki gibi olması gerekir, önemli değişikliklerin performansı veya doğruluğu etkilemesi muhtemeldir.</p>
+</li>
+<li>
+<p>Daha sonraki uygulamalarda olduğu gibi hala performans göstermez.</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_dorduncu_versiyon-section"><a class="anchor" href="#_dorduncu_versiyon-section"></a><a class="link" href="#_dorduncu_versiyon-section">4. Versiyon - Lazy Değil, Kilitleri Kullanmadan Thread Güvenli</a></h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="csharp" class="language-csharp hljs">public sealed class Singleton
+{
+    private static readonly Singleton instance = new Singleton();
+
+    // Explicit static constructor to tell C# compiler
+    // not to mark type as beforefieldinit
+    static Singleton()
+    {
+    }
+
+    private Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            return instance;
+        }
+    }
+}</code></pre>
+</div>
+</div>
+<div class="dlist">
+<dl>
+<dt class="hdlist1">Gördüğünüz gibi, bu gerçekten son derece basit ama neden thread güvenli ve ne kadar tembel(Lazy)? C#'daki statik kurucuları yalnızca sınıfın bir örneği oluşturulduğunda veya statik bir üyeye başvurulduğunda ve AppDomain başına yalnızca bir kez çalıştırılacak şekilde belirtilir. Yeni inşa edilen tip için bu kontrolün başka ne olursa olsun yapılması gerektiği göz önüne alındığında, önceki örneklerde olduğu gibi ekstra kontrol eklemekten daha hızlı olacaktır. Ancak birkaç kırışıklık vardır: </dt>
+<dd>
+<div class="ulist">
+<ul>
+<li>
+<p>Diğer versiyonlar kadar tembel değil. Özellikle, Instance dışında statik üyeleriniz varsa, bu üyelere ilk başvuruda örneğin oluşturulması gerekir. Bu bir sonraki uygulamada düzeltildi.</p>
+</li>
+<li>
+<p>Statik bir kurucu ilkini tekrar çağıran bir diğerini çağırırsa komplikasyonlar olur. Tür (type) başlatıcıların kesin yapısı hakkında daha fazla bilgi için .NET spesifikasyonlarına bakın (şu anda bölüm II part 9.5.3), sizi ısırmaları olası değildir, ancak bir döngüde birbirine atıfta bulunan statik kurucuların sonuçlarının farkında olmaya değer.</p>
+</li>
+<li>
+<p>Tür başlatıcıların tembelliği yalnızca tür, fieldfieldinit adı verilen özel bir bayrakla işaretlenmediğinde .NET tarafından garanti edilir. Ne yazık ki, C # derleyicisi (en azından .NET 1.1 çalışma zamanında sağlandığı gibi), statik bir yapıcıya sahip olmayan tüm türleri (yani bir kurucuya benzeyen ancak statik olarak işaretlenmiş bir blok) beforefieldinit olarak işaretler. Şimdi bu <a href="https://csharpindepth.com/articles/BeforeFieldInit">konuyla ilgili daha fazla ayrıntı içeren bir makalem</a> var. Ayrıca, sayfanın alt kısmında tartışıldığı gibi performansı etkilediğini de unutmayın.</p>
+</li>
+</ul>
+</div>
+</dd>
+</dl>
+</div>
+<div class="paragraph">
+<p>Bu uygulama ile (sadece bu) alabileceğiniz bir kısayol, yalnızca örneği(instance) genel bir statik salt okunur değişken yapmak ve property&#8217;den tamamen kurtulmaktır. Bu temel iskelet kodunu kesinlikle küçültür! Bununla birlikte, birçok insan gelecekte daha fazla eylem yapılması gerektiğinde bir property sahibi olmayı tercih eder ve JIT inlining&#8217;in performansı aynı yapması muhtemeldir. (Tembelliğe ihtiyacınız varsa statik kurucunun kendisinin hala gerekli olduğunu unutmayın.)</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="true5-versiyon-tamamen-tembellazy-örnekleme"><a class="anchor" href="#true5-versiyon-tamamen-tembellazy-örnekleme"></a><a class="link" href="#true5-versiyon-tamamen-tembellazy-örnekleme">5. Versiyon - Tamamen Tembel(Lazy) Örnekleme</a></h2>
+<div class="sectionbody">
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="csharp" class="language-csharp hljs">public sealed class Singleton
+{
+    private Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get { return Nested.instance; }
+    }
+
+    private class Nested
+    {
+        // Explicit static constructor to tell C# compiler
+        // not to mark type as beforefieldinit
+        static Nested()
+        {
+        }
+
+        internal static readonly Singleton instance = new Singleton();
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Burada, örnekleme(instantiation), yalnızca <code>Instance</code>'ta gerçekleşen <code>Nested</code> sınıfının statik üyesine(<code>instance</code>) yapılan ilk başvuru ile tetiklenir. Bu, uygulamanın tamamen tembel olduğu, ancak öncekilerin tüm performans avantajlarına sahip olduğu anlamına gelir. İç içe sınıflarda, çevrelenen sınıfın, dıştaki sınıfın özel(<code>private</code>) üyelerine erişimi olmasına rağmen, bunun tersi doğru olmadığından, <code>instance</code>'ın  burada <code>internal</code>(dahili) olma gereksinimi olduğunu unutmayın. Yine de, sınıfın kendisi özel olduğu için başka herhangi bir sorun yaratmaz. Ancak, örneklemenin(instantiation) tembel hale getirilmesi için kod biraz daha karmaşıklaşacaktır.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_altinci_versiyon-section"><a class="anchor" href="#_altinci_versiyon-section"></a><a class="link" href="#_altinci_versiyon-section">6. Versiyon - .NET 4&#8217;ün Lazy&lt;T&gt; Tipini Kullanarak</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>.NET 4 (veya üstü) kullanıyorsanız, tembelliği gerçekten basitleştirmek için <code>System.Lazy&lt;T&gt;</code> türünü kullanabilirsiniz. Tek yapmanız gereken, <code>Singleton</code> yapıcısını çağıran kurucuya bir temsilci aktarmaktır, ki bu en kolay lambda ifadesiyle yapılır.</p>
+</div>
+<div class="listingblock">
+<div class="content">
+<pre class="highlightjs highlight"><code data-lang="csharp" class="language-csharp hljs">public sealed class Singleton
+{
+    private static readonly Lazy&lt;Singleton&gt; lazy = new Lazy&lt;Singleton&gt;(() =&gt; new Singleton());
+
+    public static Singleton Instance
+    {
+        get { return lazy.Value; }
+    }
+
+    private Singleton()
+    {
+    }
+}</code></pre>
+</div>
+</div>
+<div class="paragraph">
+<p>Çok basit ve iyi performans gösteriyor. Ayrıca eğer ihtiyacınız olursa, örneğin(instance) henüz IsValueCreated özelliğiyle oluşturulup oluşturulmadığını kontrol edebilmenizi sağlar.</p>
+</div>
+<div class="paragraph">
+<p>Yukarıdaki kod örtülü olarak LazyThreadSafetyMode.ExecutionAndPublication öğesini <code>Lazy&lt;Singleton&gt;</code> için thread güvenlik modu olarak kullanır. Gereksinimlerinize bağlı olarak, diğer modlarla deneme yapmak isteyebilirsiniz.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trueperformans-vs-laziness"><a class="anchor" href="#trueperformans-vs-laziness"></a><a class="link" href="#trueperformans-vs-laziness">Performans vs Laziness</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Sınıf başlatmanız(initialization) özellikle zaman alıcı olmazsa veya başka bir yerde bazı yan etkileri yoksa tam tembellik gerekmeyecek , aksi takdirde muhtemelen yukarıda gösterilen açık statik yapıcıyı bırakmak iyi olur. Bu, JIT derleyicisinin türün(type) başlatıldığından emin olmak için tek bir denetim (örneğin bir yöntemin başında) yapmasına izin verdiğinden ve daha sonra varsayıldığından performansı artırabilir. Singleton örneğinize(instance&#8217;ına) nispeten sıkı bir döngü içinde başvurulursa, bu (nispeten) önemli bir performans farkı yaratabilir. Tamamen tembel örneklemeye gerek olup olmadığına karar vermeli ve bu kararı sınıf içinde uygun şekilde belgelemelisiniz.</p>
+</div>
+<div class="paragraph">
+<p>Bu sayfanın var olmasındaki büyük neden, zeki olmaya çalışan insanlardır ve böylece çift kontrollu kilitleme algoritması ortaya çıkar. Kilitlemenin pahalı olması yaygın ve yanlış yönlendirilmiş bir tutumdur. Farklı varyantları denemek için sadece bir milyar döngüde bir singleton örnekleri(instance) elde eden çok hızlı bir kıyaslama yazdım. Çok bilimsel değil, çünkü gerçek hayatta her yinelemedeki Singleton&#8217;u getiren bir yönteme çağrı yapmanın ne kadar hızlı olduğunu bilmek isteyebilirsiniz. Ancak, önemli bir noktaya işaret ediyor. Dizüstü bilgisayarımda, en yavaş çözüm (yaklaşık 5 faktör) kilitleme olandır(çözüm 2). Önemli mi? Muhtemelen hayır, hala 40 saniyenin altında singleton&#8217;ı bir milyar kez elde etmeyi başardığını unutmayın. (Not: Bu makale başlangıçta bir süre önce yazılmıştı - şimdi daha iyi performans bekliyorum.) Bu demektir ki eğer "sadece" saniyede dört yüz bin kez singleton alıyorsanız, edinme maliyeti performansın% 1&#8217;i olacak , yani onu geliştirmek çok da önemli değildir. Şimdi, sık sık bir singletonu alıyorsanız - muhtemelen bir döngü içinde kullanıyorsunuz değil mi? Performansı biraz artırmaya önem veriyorsanız, neden döngü dışında yerel bir değişken tanımlamıyorsunuz,  singleton&#8217;u bir kez alıp sonra döngüye almıyorsunuz. Bingo, en yavaş uygulama bile kolayca yeterli hale geliyor.</p>
+</div>
+<div class="paragraph">
+<p>Basit kilitleme ve daha hızlı çözümlerden birini kullanma arasındaki farkın gerçekten önemli bir performans farkı yarattığı gerçek bir dünya uygulaması görmek isterim.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="trueistisnalar"><a class="anchor" href="#trueistisnalar"></a><a class="link" href="#trueistisnalar">İstisnalar</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>Bazen, bir istisna oluşturabilecek, ancak tüm uygulama için ölümcül olmayabilecek bir singleton yapıcısında çalışmanız gerekir. Potansiyel olarak, uygulamanız sorunu çözebilir ve tekrar denemek isteyebilir. Singletonu oluşturmak için tip başlatıcıları(type initializers) kullanmak bu aşamada sorunlu hale gelir. Farklı çalışma süreleri (runtimes) bu davayı farklı şekilde ele alır, ama istenen şeyi yapan hiçbir şey bilmiyorum (tip başlatıcıyı (type initializer) tekrar çalıştırmak), ve biri yapsa bile, kodunuz diğer çalışma zamanlarında bozulacaktı. Bu sorunları önlemek için, sayfada listelenen ikinci kalıbı kullanmanızı öneririm - sadece basit bir kilit kullanın ve her seferinde kontrolü başarıyla gerçekleştirin, örneği daha önce başarıyla oluşturulmamışsa yöntem/özellik(property) içinde oluşturun.</p>
+</div>
+<div class="paragraph">
+<p>Andriy Tereshchenko&#8217;ya bu konuyu gündeme getirdiği için teşekkürler.</p>
+</div>
+</div>
+</div>
+<div class="sect1">
+<h2 id="_sonuc-section"><a class="anchor" href="#_sonuc-section"></a><a class="link" href="#_sonuc-section">Sonuç (7 Ocak 2006&#8217;da biraz değiştirildi; 12 Şubat 2011&#8217;de güncellendi)</a></h2>
+<div class="sectionbody">
+<div class="paragraph">
+<p>C#'da singleton desenini uygulamanın çeşitli yolları vardır. Bir okuyucu bana, senkronizasyon yönünü kapsadığı bir yöntemi ayrıntılı olarak yazdı; bunu, bazı çok özel durumlarda (özellikle çok yüksek performans istediğiniz yerde ve singletonun yaratılıp yaratılmadığını belirleme yeteneği ve diğer statik üyeler ne olursa olsun tam tembellik istediğinizde) faydalı olabileceğini kabul ediyorum. Şahsen bu durumun bu sayfada daha ileri gitmeyi hak edecek kadar sık geldiğini görmüyorum, ancak bu durumdaysanız lütfen bana mail atın.</p>
+</div>
+<div class="paragraph">
+<p>Kişisel tercihim çözüm 4 için: normalde ondan uzaklaşacağım tek zaman, başlatma işlemini tetiklemeden diğer statik yöntemleri arayabilmem gerektiğinde veya singleton&#8217;un zaten somutlaştırılmış olup olmadığını bilmem gerekiyorsa. Bu durumda en son ne zaman olduğumu hatırlamıyorum. Bu durumda, muhtemelen hala güzel ve kolay olması için çözüm 2&#8217;ye giderdim.</p>
+</div>
+<div class="paragraph">
+<p>Çözüm 5 zariftir, ancak 2 veya 4&#8217;ten daha zordur ve yukarıda söylediğim gibi, sağladığı faydalar nadiren yararlı görünmektedir. Çözüm 6, .NET 4 kullanıyorsanız, tembelliğe ulaşmanın daha basit bir yoludur. Açıkçası tembel olma avantajı da var. Şu anda çözüm 4&#8217;ü sadece alışkanlıktan dolayı kullanmaya eğilimliyim - ancak deneyimsiz geliştiricilerle çalışsaydım muhtemelen çözüm 6&#8217;ya giderdim çünkü kolay ve evrensel olarak uygulanabilir bir model olduğu için.</p>
+</div>
+<div class="paragraph">
+<p>(Çözüm 1&#8217;i kullanmazdım çünkü bozuktur ve çözüm 3&#8217;ü kullanmam çünkü çözüm 5&#8217;ten fazla faydalı değil.)</p>
+</div>
+<div class="paragraph">
+<p>Çevirinin orjinali : <a href="https://csharpindepth.com/articles/singleton" class="bare">https://csharpindepth.com/articles/singleton</a></p>
+</div>
+</div>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2020-04-07 23:59:42 +0300
+</div>
+</div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/styles/github.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.15.6/highlight.min.js"></script>
+<script>hljs.initHighlighting()</script>
+</body>
+</html>

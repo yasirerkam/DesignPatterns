@@ -1,0 +1,263 @@
+:sectanchors:
+:sectlinks:
+
+= Singleton Paternin C#'da Uygulanması
+Yasir Erkam Özdemir
+:orjinalSayfa: https://csharpindepth.com/articles/singleton
+
+[[icindekiler-section,İçindekiler]]
+== İçindekiler
+
+. <<Giriş>>
+. <<1. Versiyon - Thread (İş parçacığı) İçin Güvenli Olmayan Sürüm>>
+. <<2. Versiyon - Basit Thread Güvenli>>
+. <<3. Versiyon - Çift Kontrol Kilidi Kullanarak Thread Güvenliği Denemesi>>
+. <<_dorduncu_versiyon-section,4. Versiyon - Lazy Değil, Kilitleri Kullanmadan Thread Güvenli>>
+. <<5. Versiyon - Tamamen Tembel(Lazy) Örnekleme>>
+. <<_altinci_versiyon-section,6. Versiyon - .NET 4'ün Lazy<T> Tipini Kullanarak>>
+. <<Performans vs Laziness>>
+. <<İstisnalar>>
+. <<_sonuc-section,Sonuç (7 Ocak 2006'da biraz değiştirildi; 12 Şubat 2011'de güncellendi)>>
+
+== Giriş
+
+Singleton paterni, yazılım mühendisliğinde en iyi bilinen paternlerden biridir. Esasen, bir singleton, yalnızca kendisinin tek bir örneğinin oluşturulmasına izin veren ve genellikle bu örneğe (Instance) kolay erişim sağlayan bir sınıftır. En yaygın olarak, singletonlar örneği(Instance) oluştururken herhangi bir parametrenin belirtilmesine izin vermez - aksi halde bir örnek için farklı bir parametreye sahip ikinci bir istek sorunlu olabilir! (Aynı parametreye sahip tüm istekler için aynı örneğe erişilmesi gerekiyorsa, fabrika modeli daha uygundur.) Bu makalede yalnızca hiçbir parametrenin gerekli olmadığı durum ele alınmaktadır. Tipik olarak singletonların bir şartı tembel (lazy) olarak yaratılmasıdır - yani ilk ihtiyaç olana kadar örneğin yaratılmamasıdır.
+
+C# 'da singleton desenini uygulamanın çeşitli yolları vardır. Onları burada, en yaygın görülen, thread için güvenli olmayandan, tamamen tembel olarak yüklenen, thread için güvenli, basit ve yüksek performanslı bir versiyona kadar zarafet sırasına göre sunacağım.
+
+Bununla birlikte, tüm bu uygulamalar dört ortak özelliğe sahiptir::
+* Özel ve parametresiz tek bir kurucu. Bu, diğer sınıfların onu örneklemesini (instance) önler (Ki bu, singleton deseninin ihlali anlamına gelir). Alt sınıflamayı da önlediğine dikkat edin - eğer bir singleton bir kez alt sınıflara ayrılabilirse, ikinci kez de alt sınıflara ayrılabilir ve bu alt sınıfların her biri bir örnek oluşturabilirse, yine singleton deseni ihlal edilir. Fabrika Deseni (Factory Design), bir taban türünün tek bir örneğine ihtiyacınız varsa kullanılabilir, ancak bu desende tam tür çalışma zamanına kadar bilinmez.
+* Sınıf mühürlenmiştir (sealed). Yukarıdaki noktadan dolayı bu kesinlikle gereksizdir, ancak JIT'in işleri daha iyi hale getirmesine yardımcı olabilir.
+* Varsa, bir kez oluşturulan örneğe başvuru tutan statik değişken.
+* "public statik" oluşturulan tek bir örneğe referans almak anlamına gelir.
+
+Tüm bu uygulamaların, örneğe erişme aracı olarak bir ortak statik özellik (property) örneği (instance) kullandığını unutmayın. Her durumda, özellik thread güvenliği veya performansı üzerinde hiçbir etkisi olmayan bir yönteme kolayca dönüştürülebilir.
+
+== 1. Versiyon - Thread (İş parçacığı) İçin Güvenli Olmayan Sürüm
+
+[source,csharp]
+----
+// Kullanma! Kötü kod.
+public sealed class Singleton
+{
+    private static Singleton instance = null;
+
+    private Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                instance = new Singleton();
+            }
+            return instance;
+        }
+    }
+}
+----
+
+Daha önce ima edildiği gibi, yukarıdaki thread güvenli değildir. İki farklı thread If testini ``(instance == null)`` değerlendirebilirdi ve doğru bulabilirdi, sorna her ikisi de singleton desenini ihlal eden örnekler oluştururdu. Aslında, örnek (instance), ifade değerlendirilmeden önce oluşturulmuş olabilir, ancak bellek modeli, uygun bellek engelleri geçilmedikçe yeni örnek değerinin diğer threadler tarafından görüleceğini garanti etmez.
+
+== 2. Versiyon - Basit Thread Güvenli
+
+[source,csharp]
+----
+public sealed class Singleton
+{
+    private static Singleton instance = null;
+    private static readonly object padlock = new object();
+
+    Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            lock (padlock)
+            {
+                if (instance == null)
+                {
+                    instance = new Singleton();
+                }
+                return instance;
+            }
+        }
+    }
+}
+----
+
+Bu uygulama thread için güvenlidir. Thread, paylaşılan bir nesne üzerinde bir kilit alır ve sonra örneği oluşturmadan önce örneğin oluşturulmuş olup olmadığını denetler. Bu, bellek bariyeri sorunuyla ilgilenir (kilitleme, kilit alındıktan sonra tüm okumaların mantıksal olarak gerçekleşmesini sağlar ve kilidin açılması, tüm yazma işlemlerinin kilit serbest bırakılmadan önce mantıksal olarak gerçekleşmesini sağlar) ve yalnızca bir threadin bir örnek(instance) oluşturmasını sağlar (yalnızca bir thread tek seferde kodun o bölümünde olabilir - ikinci thread girdiği zaman, ilk thread, örneği(instance) zaten oluşturmuş olur, böylece `if (instance == null)` ifadesi false olarak değerlendirilir). Ne yazık ki bu versiyonda, örnek her istendiğinde bir kilit alındığı için performans düşer.
+
+Bu uygulamanın bazı versiyonlarında olduğu gibi typeof (Singleton) üzerine kilitlemek yerine, sınıfa özel(private) statik değişkenin (``padlock``) değerinin kilitlendiğini unutmayın. Diğer sınıfların erişebileceği ve üzerine kilitleyebileceği nesnelerin (type gibi) kilitlenmesi, performans sorunları ve hatta kilitlenme riskiyleriyle karşı karşıyadır. Bu, genel bir stil tercihidir. Mümkünse, sadece kilitleme amacıyla özel olarak oluşturulmuş veya belirli amaçlar için kilitlenecekleri belgeler (örneğin bir kuyruğu beklemek / atmak için) üzerine kilitleyin. Genellikle bu nesneler kullanıldıkları sınıfa özel(private) olmalıdır. Bu, thread için güvenli uygulamalar yazmayı önemli ölçüde kolaylaştırır.
+
+== 3. Versiyon - Çift Kontrol Kilidi Kullanarak Thread Güvenliği Denemesi
+
+[source,csharp]
+----
+// Kullanma! Kötü kod.
+public sealed class Singleton
+{
+    private static Singleton instance = null;
+    private static readonly object padlock = new object();
+
+    Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            if (instance == null)
+            {
+                lock (padlock)
+                {
+                    if (instance == null)
+                    {
+                        instance = new Singleton();
+                    }
+                }
+            }
+            return instance;
+        }
+    }
+}
+----
+
+Bu uygulama her seferinde bir kilit almaya gerek kalmadan thread için güvenli olmaya çalışır. Ne yazık ki, desenin dört dezavantajı vardır: ::
+
+* Java ile çalışmaz. Bu, yorum yapmak için garip bir şey gibi görünebilir, ancak Java'da bu singleton desene ihtiyacınız olup olmadığını bilmeye değer ve C# programcıları da Java programcıları olabilir. Java bellek modeli, yeni nesneye yapılan başvuru (referans), örneğe(instance) atanmadan önce kurucunun tamamlanmasını garanti etmez. Java bellek modeli sürüm 1.5 için yeniden işleme tabi tutuldu, ancak bundan sonra bile çift kontrollü kilitleme, geçici bir değişken olmadan (C#'da olduğu gibi) hala bozuktur.
+
+* Herhangi bir bellek engeli olmadan, ECMA CLI spesifikasyonunda da bozuktur. .NET 2.0 bellek modeli (ECMA özelliklerinden daha güçlü) altında güvenli olması mümkündür, ama bu güçlü semantiğe güvenmemeyi tercih ederim, özellikle de güvenlik konusunda herhangi bir şüphe varsa. Örnek değişkenini(``instance``) geçici yapmak, çalışmasını sağlayabilir, açık bellek engelleme çağrıları gibi, ancak ikinci durumda uzmanlar bile hangi engellerin gerekli olduğunu tam olarak kabul edemezler. Uzmanların neyin doğru neyin yanlış olduğunu kabul etmediği durumlardan kaçınma eğilimindeyim!
+
+* Yanlış anlaşılması kolaydır. Desenin hemen hemen yukarıdaki gibi olması gerekir, önemli değişikliklerin performansı veya doğruluğu etkilemesi muhtemeldir.
+
+* Daha sonraki uygulamalarda olduğu gibi hala performans göstermez.
+
+[[_dorduncu_versiyon-section]]
+== 4. Versiyon - Lazy Değil, Kilitleri Kullanmadan Thread Güvenli
+
+[source,csharp]
+----
+public sealed class Singleton
+{
+    private static readonly Singleton instance = new Singleton();
+
+    // Explicit static constructor to tell C# compiler
+    // not to mark type as beforefieldinit
+    static Singleton()
+    {
+    }
+
+    private Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get
+        {
+            return instance;
+        }
+    }
+}
+----
+
+Gördüğünüz gibi, bu gerçekten son derece basit ama neden thread güvenli ve ne kadar tembel(Lazy)? C#'daki statik kurucuları yalnızca sınıfın bir örneği oluşturulduğunda veya statik bir üyeye başvurulduğunda ve AppDomain başına yalnızca bir kez çalıştırılacak şekilde belirtilir. Yeni inşa edilen tip için bu kontrolün başka ne olursa olsun yapılması gerektiği göz önüne alındığında, önceki örneklerde olduğu gibi ekstra kontrol eklemekten daha hızlı olacaktır. Ancak birkaç kırışıklık vardır: ::
+
+* Diğer versiyonlar kadar tembel değil. Özellikle, Instance dışında statik üyeleriniz varsa, bu üyelere ilk başvuruda örneğin oluşturulması gerekir. Bu bir sonraki uygulamada düzeltildi.
+
+* Statik bir kurucu ilkini tekrar çağıran bir diğerini çağırırsa komplikasyonlar olur. Tür (type) başlatıcıların kesin yapısı hakkında daha fazla bilgi için .NET spesifikasyonlarına bakın (şu anda bölüm II part 9.5.3), sizi ısırmaları olası değildir, ancak bir döngüde birbirine atıfta bulunan statik kurucuların sonuçlarının farkında olmaya değer.
+
+* Tür başlatıcıların tembelliği yalnızca tür, fieldfieldinit adı verilen özel bir bayrakla işaretlenmediğinde .NET tarafından garanti edilir. Ne yazık ki, C # derleyicisi (en azından .NET 1.1 çalışma zamanında sağlandığı gibi), statik bir yapıcıya sahip olmayan tüm türleri (yani bir kurucuya benzeyen ancak statik olarak işaretlenmiş bir blok) beforefieldinit olarak işaretler. Şimdi bu https://csharpindepth.com/articles/BeforeFieldInit[konuyla ilgili daha fazla ayrıntı içeren bir makalem] var. Ayrıca, sayfanın alt kısmında tartışıldığı gibi performansı etkilediğini de unutmayın.
+
+Bu uygulama ile (sadece bu) alabileceğiniz bir kısayol, yalnızca örneği(instance) genel bir statik salt okunur değişken yapmak ve property'den tamamen kurtulmaktır. Bu temel iskelet kodunu kesinlikle küçültür! Bununla birlikte, birçok insan gelecekte daha fazla eylem yapılması gerektiğinde bir property sahibi olmayı tercih eder ve JIT inlining'in performansı aynı yapması muhtemeldir. (Tembelliğe ihtiyacınız varsa statik kurucunun kendisinin hala gerekli olduğunu unutmayın.)
+
+== 5. Versiyon - Tamamen Tembel(Lazy) Örnekleme
+
+[source,csharp]
+----
+public sealed class Singleton
+{
+    private Singleton()
+    {
+    }
+
+    public static Singleton Instance
+    {
+        get { return Nested.instance; }
+    }
+
+    private class Nested
+    {
+        // Explicit static constructor to tell C# compiler
+        // not to mark type as beforefieldinit
+        static Nested()
+        {
+        }
+
+        internal static readonly Singleton instance = new Singleton();
+    }
+}
+----
+
+Burada, örnekleme(instantiation), yalnızca ``Instance``'ta gerçekleşen ``Nested`` sınıfının statik üyesine(``instance``) yapılan ilk başvuru ile tetiklenir. Bu, uygulamanın tamamen tembel olduğu, ancak öncekilerin tüm performans avantajlarına sahip olduğu anlamına gelir. İç içe sınıflarda, çevrelenen sınıfın, dıştaki sınıfın özel(``private``) üyelerine erişimi olmasına rağmen, bunun tersi doğru olmadığından, ``instance``'ın  burada ``internal``(dahili) olma gereksinimi olduğunu unutmayın. Yine de, sınıfın kendisi özel olduğu için başka herhangi bir sorun yaratmaz. Ancak, örneklemenin(instantiation) tembel hale getirilmesi için kod biraz daha karmaşıklaşacaktır.
+
+[[_altinci_versiyon-section]]
+== 6. Versiyon - .NET 4'ün Lazy<T> Tipini Kullanarak
+
++.NET+ 4 (veya üstü) kullanıyorsanız, tembelliği gerçekten basitleştirmek için ``System.Lazy<T>`` türünü kullanabilirsiniz. Tek yapmanız gereken, ``Singleton`` yapıcısını çağıran kurucuya bir temsilci aktarmaktır, ki bu en kolay lambda ifadesiyle yapılır.
+
+[source,csharp]
+----
+public sealed class Singleton
+{
+    private static readonly Lazy<Singleton> lazy = new Lazy<Singleton>(() => new Singleton());
+
+    public static Singleton Instance
+    {
+        get { return lazy.Value; }
+    }
+
+    private Singleton()
+    {
+    }
+}
+----
+
+Çok basit ve iyi performans gösteriyor. Ayrıca eğer ihtiyacınız olursa, örneğin(instance) henüz IsValueCreated özelliğiyle oluşturulup oluşturulmadığını kontrol edebilmenizi sağlar.
+
+Yukarıdaki kod örtülü olarak LazyThreadSafetyMode.ExecutionAndPublication öğesini ``Lazy<Singleton>`` için thread güvenlik modu olarak kullanır. Gereksinimlerinize bağlı olarak, diğer modlarla deneme yapmak isteyebilirsiniz. 
+
+== Performans vs Laziness
+
+Sınıf başlatmanız(initialization) özellikle zaman alıcı olmazsa veya başka bir yerde bazı yan etkileri yoksa tam tembellik gerekmeyecek , aksi takdirde muhtemelen yukarıda gösterilen açık statik yapıcıyı bırakmak iyi olur. Bu, JIT derleyicisinin türün(type) başlatıldığından emin olmak için tek bir denetim (örneğin bir yöntemin başında) yapmasına izin verdiğinden ve daha sonra varsayıldığından performansı artırabilir. Singleton örneğinize(instance'ına) nispeten sıkı bir döngü içinde başvurulursa, bu (nispeten) önemli bir performans farkı yaratabilir. Tamamen tembel örneklemeye gerek olup olmadığına karar vermeli ve bu kararı sınıf içinde uygun şekilde belgelemelisiniz.
+
+Bu sayfanın var olmasındaki büyük neden, zeki olmaya çalışan insanlardır ve böylece çift kontrollu kilitleme algoritması ortaya çıkar. Kilitlemenin pahalı olması yaygın ve yanlış yönlendirilmiş bir tutumdur. Farklı varyantları denemek için sadece bir milyar döngüde bir singleton örnekleri(instance) elde eden çok hızlı bir kıyaslama yazdım. Çok bilimsel değil, çünkü gerçek hayatta her yinelemedeki Singleton'u getiren bir yönteme çağrı yapmanın ne kadar hızlı olduğunu bilmek isteyebilirsiniz. Ancak, önemli bir noktaya işaret ediyor. Dizüstü bilgisayarımda, en yavaş çözüm (yaklaşık 5 faktör) kilitleme olandır(çözüm 2). Önemli mi? Muhtemelen hayır, hala 40 saniyenin altında singleton'ı bir milyar kez elde etmeyi başardığını unutmayın. (Not: Bu makale başlangıçta bir süre önce yazılmıştı - şimdi daha iyi performans bekliyorum.) Bu demektir ki eğer "sadece" saniyede dört yüz bin kez singleton alıyorsanız, edinme maliyeti performansın% 1'i olacak , yani onu geliştirmek çok da önemli değildir. Şimdi, sık sık bir singletonu alıyorsanız - muhtemelen bir döngü içinde kullanıyorsunuz değil mi? Performansı biraz artırmaya önem veriyorsanız, neden döngü dışında yerel bir değişken tanımlamıyorsunuz,  singleton'u bir kez alıp sonra döngüye almıyorsunuz. Bingo, en yavaş uygulama bile kolayca yeterli hale geliyor.
+
+Basit kilitleme ve daha hızlı çözümlerden birini kullanma arasındaki farkın gerçekten önemli bir performans farkı yarattığı gerçek bir dünya uygulaması görmek isterim.
+
+== İstisnalar
+
+Bazen, bir istisna oluşturabilecek, ancak tüm uygulama için ölümcül olmayabilecek bir singleton yapıcısında çalışmanız gerekir. Potansiyel olarak, uygulamanız sorunu çözebilir ve tekrar denemek isteyebilir. Singletonu oluşturmak için tip başlatıcıları(type initializers) kullanmak bu aşamada sorunlu hale gelir. Farklı çalışma süreleri (runtimes) bu davayı farklı şekilde ele alır, ama istenen şeyi yapan hiçbir şey bilmiyorum (tip başlatıcıyı (type initializer) tekrar çalıştırmak), ve biri yapsa bile, kodunuz diğer çalışma zamanlarında bozulacaktı. Bu sorunları önlemek için, sayfada listelenen ikinci kalıbı kullanmanızı öneririm - sadece basit bir kilit kullanın ve her seferinde kontrolü başarıyla gerçekleştirin, örneği daha önce başarıyla oluşturulmamışsa yöntem/özellik(property) içinde oluşturun.
+
+Andriy Tereshchenko'ya bu konuyu gündeme getirdiği için teşekkürler.
+
+[[_sonuc-section]]
+== Sonuç (7 Ocak 2006'da biraz değiştirildi; 12 Şubat 2011'de güncellendi)
+
+C#'da singleton desenini uygulamanın çeşitli yolları vardır. Bir okuyucu bana, senkronizasyon yönünü kapsadığı bir yöntemi ayrıntılı olarak yazdı; bunu, bazı çok özel durumlarda (özellikle çok yüksek performans istediğiniz yerde ve singletonun yaratılıp yaratılmadığını belirleme yeteneği ve diğer statik üyeler ne olursa olsun tam tembellik istediğinizde) faydalı olabileceğini kabul ediyorum. Şahsen bu durumun bu sayfada daha ileri gitmeyi hak edecek kadar sık geldiğini görmüyorum, ancak bu durumdaysanız lütfen bana mail atın.
+
+Kişisel tercihim çözüm 4 için: normalde ondan uzaklaşacağım tek zaman, başlatma işlemini tetiklemeden diğer statik yöntemleri arayabilmem gerektiğinde veya singleton'un zaten somutlaştırılmış olup olmadığını bilmem gerekiyorsa. Bu durumda en son ne zaman olduğumu hatırlamıyorum. Bu durumda, muhtemelen hala güzel ve kolay olması için çözüm 2'ye giderdim.
+
+Çözüm 5 zariftir, ancak 2 veya 4'ten daha zordur ve yukarıda söylediğim gibi, sağladığı faydalar nadiren yararlı görünmektedir. Çözüm 6, .NET 4 kullanıyorsanız, tembelliğe ulaşmanın daha basit bir yoludur. Açıkçası tembel olma avantajı da var. Şu anda çözüm 4'ü sadece alışkanlıktan dolayı kullanmaya eğilimliyim - ancak deneyimsiz geliştiricilerle çalışsaydım muhtemelen çözüm 6'ya giderdim çünkü kolay ve evrensel olarak uygulanabilir bir model olduğu için.
+
+(Çözüm 1'i kullanmazdım çünkü bozuktur ve çözüm 3'ü kullanmam çünkü çözüm 5'ten fazla faydalı değil.)
+
+Çevirinin orjinali : {orjinalSayfa}
